@@ -1,0 +1,33 @@
+# Environment and local configs
+.env
+config.local.json
+active_port.txt
+data/active_port.txt
+
+# Databases and locks
+data/*.db-wal
+data/*.db-shm
+
+# Build outputs (Pages output directory is pushed to dedicated branch)
+dist/
+.cloudflare/
+
+# Old Wrangler / Cloudflare caches
+.wrangler/
+
+# Logs
+*.log
+data/*.log
+
+# Python cache and virtualenvs
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.pytest_cache/
+
+# OS specific
+.DS_Store
+Thumbs.db

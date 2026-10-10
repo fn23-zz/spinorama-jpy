@@ -1,0 +1,13 @@
+{
+  "speaker_id": 71,
+  "price_jpy": null,
+  "price_each": null,
+  "price_type": "pair",
+  "availability": "not_available",
+  "verification_status": "unavailable",
+  "confidence_level": "high",
+  "source_name": "AsciLab公式Dealer List / C6B製品ページ",
+  "source_url": "https://www.ascilab.com/company/stockist.html",
+  "search_keyword": "AsciLab C6B 日本 国内販売 正規代理店 価格",
+  "notes": "公式ディーラー一覧に日本の正規販売店・代理店はない。C6Bは海外配送対応の海外直販品で、国内新品市場価格は設定しない。販売単位はペア。"
+}

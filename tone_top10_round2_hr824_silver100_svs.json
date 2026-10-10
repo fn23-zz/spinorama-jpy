@@ -1,0 +1,41 @@
+[
+  {
+    "speaker_id": 714,
+    "price_jpy": 220000,
+    "price_each": 110000,
+    "price_type": "pair",
+    "availability": "domestic_in_stock",
+    "verification_status": "verified",
+    "confidence_level": "high",
+    "source_name": "ナスペック（Monitor Audio 日本正規輸入代理店）／価格.com",
+    "source_url": "https://naspecaudio.com/maker/monitor-audio/monitor-audio-silver-series-7g/silver-100-7g/",
+    "search_keyword": "Monitor Audio Silver 100-7G 価格 税込 ペア",
+    "notes": "国内正規流通あり（正規輸入代理店＝株式会社ナスペック）。採用価格は現行 Silver 100-7G の税込ペア ¥220,000（代理店公式表示「¥200,000-(税込 ¥220,000-/ペア)」、価格.com最安も¥220,000で一致）。旧DB値¥62,000は為替換算の参考値で実勢の約1/3.5だったため破棄。世代: 現行=Silver 100-7G(2021/11発売)／限定=Silver 100 Limited Edition 希望小売¥275,000税込ペア／新世代=Silver 100-8G(3way化, 2026/9/30発売, ¥434,500税込ペア)で世代交代予定。"
+  },
+  {
+    "speaker_id": 655,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "discontinued",
+    "verification_status": "verified",
+    "confidence_level": "high",
+    "source_name": "サウンドハウス（MACKIE正規輸入代理店）／ビックカメラ.com／Amazon.co.jp",
+    "source_url": "https://www.soundhouse.co.jp/products/detail/item/123613/",
+    "search_keyword": "Mackie HR824 価格 終売",
+    "notes": "国内は終売確定。サウンドハウス(正規輸入代理店)は後継HR824mk2のみ取扱でページは「取扱中止（生産完了等）」。HR824サイト内検索は該当商品なし（初代HR824の商品ページ自体が存在しない）。ビックカメラ.comは「販売を終了しました（生産完了）」、Amazon.co.jp国内正規品は「現在在庫切れ、再入荷予定なし」。楽天・ハードオフ・デジマートは中古/新古のみ（中古価格は新品根拠に不採用）。価格.comにHR824の製品ページなし。旧DBは為替換算($650×155)で順位に載っていたが国内価格根拠なしのため破棄。"
+  },
+  {
+    "speaker_id": 940,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "high",
+    "source_name": "SVS公式 International Dealers（日本未掲載＝国内正規代理店なし）",
+    "source_url": "https://www.svsound.com/pages/international-dealers",
+    "search_keyword": "SVS Ultra Bookshelf 正規代理店 日本 価格 ペア",
+    "notes": "日本国内にSVSの正規代理店・正規流通は存在しない。SVS公式International Dealersページに中国・韓国・台湾・香港・シンガポール等は掲載されるがJapanの記載は皆無。ヨドバシ/ビックカメラ/価格.com/アバック/KOPEK JAPAN等いずれも取扱なし。日本での入手は並行輸入（Amazon.co.jpマーケットプレイス、eBay等）のみで国内保証なし。旧世代Ultra BookshelfはSVS公式で「no longer in stock」（後継はUltra Evolution Bookshelf）。旧DB値¥77,500は為替換算参考値で国内実売の裏付けなし。並行輸入参考値: 旧Ultra Bookshelfペア約¥286,601、Ultra Evolution Bookshelfペア約¥264,771（非正規）。"
+  }
+]

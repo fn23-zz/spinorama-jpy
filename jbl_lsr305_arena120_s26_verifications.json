@@ -1,0 +1,41 @@
+[
+  {
+    "speaker_id": 466,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "medium",
+    "source_name": "価格.com／サウンドハウス／イケベ楽器／JBL Professional",
+    "source_url": "https://search.kakaku.com/JBL%20LSR305/",
+    "search_keyword": "JBL LSR305 国内新品 価格",
+    "notes": "国内新品の現行価格・在庫は確認できない。価格.comのLSR305/LSR305-WHは価格情報なし。サウンドハウス検索は商品なし、イケベ楽器検索は該当なし。後継305P MkIIの価格はLSR305に採用しない。JBL Professional旧製品ページ: https://jblpro.com/en-US/products/lsr305"
+  },
+  {
+    "speaker_id": 439,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "medium",
+    "source_name": "価格.com／JBL公式ストア／コジマネット",
+    "source_url": "https://kakaku.com/item/K0000779777/",
+    "search_keyword": "JBL Arena 120 日本 新品 価格 販売本数",
+    "notes": "価格.comは現在価格情報なし、仕様の販売本数は2本1組。JBL公式現行ホームオーディオ一覧とコジマネット検索にArena 120は掲載なし。国内新品流通なし・日本価格不明として確定。"
+  },
+  {
+    "speaker_id": 494,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "high",
+    "source_name": "HiFi Engine／JBL公式通販／国内主要販売店検索",
+    "source_url": "https://www.hifiengine.com/manual_library/jbl/s26.shtml",
+    "search_keyword": "JBL Studio Series S26 日本 新品 価格",
+    "notes": "S26は2000年の旧製品。JBL公式現行カタログ、価格.com、ヨドバシ、ビック、コジマ、Amazonに新品本体の現行販売を確認できない。国内新品流通なし・日本価格不明として確定。"
+  }
+]

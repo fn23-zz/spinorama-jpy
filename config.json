@@ -1,0 +1,11 @@
+{
+  "usd_to_jpy_rate": 155.0,
+  "weekly_update_interval_days": 7,
+  "db_path": "data/spinorama_jpy.db",
+  "manual_overrides_path": "data/manual_overrides.json",
+  "server_port": 8550,
+  "crawler": {
+    "rate_limit_delay_seconds": 1.5,
+    "max_batch_size": 150
+  }
+}

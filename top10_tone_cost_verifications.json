@@ -1,0 +1,54 @@
+[
+  {
+    "speaker_id": 70,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "medium",
+    "source_name": "Sound On Sound／国内主要販売店ドメイン検索",
+    "source_url": "https://www.soundonsound.com/reviews/ascilab-a6b",
+    "search_keyword": "AsciLab C5B 日本 価格 販売",
+    "notes": "国内正規販売店・国内新品ページを確認できない。主要国内販売店検索でもC5Bの該当結果なし。海外過去価格・為替換算は国内新品価格の根拠にしない。"
+  },
+  {
+    "speaker_id": 490,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "high",
+    "source_name": "価格.com（STUDIO 530CH [ペア] 製品ページ）",
+    "source_url": "https://kakaku.com/item/K0000289835/",
+    "search_keyword": "JBL Studio 530 / STUDIO 530CH [ペア]",
+    "notes": "価格.comで価格情報なし・販売ショップ数0。JBL国内公式現行カタログ、ヨドバシ、ビックカメラにも国内新品ページを確認できず、旧製品の国内新品流通なしと判断。"
+  },
+  {
+    "speaker_id": 53,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "medium",
+    "source_name": "Ascend Acoustics 公式（配送ポリシー）",
+    "source_url": "https://www.ascendacoustics.com/pages/shipping",
+    "search_keyword": "Ascend Acoustics CMT-340SE2 日本 正規代理店 新品 価格",
+    "notes": "日本の正規代理店・国内新品流通・円建て価格を確認できない。公式は海外顧客に直販し世界各地へ発送する方針であり、日本では海外直販・個人輸入扱い。"
+  },
+  {
+    "speaker_id": 150,
+    "price_jpy": null,
+    "price_each": null,
+    "price_type": "pair",
+    "availability": "not_available",
+    "verification_status": "unavailable",
+    "confidence_level": "medium",
+    "source_name": "Yahoo! JAPAN検索（国内新品流通確認）",
+    "source_url": "https://search.yahoo.co.jp/search?p=Canton%20Vento%20826.2%20%E6%96%B0%E5%93%81%20%E6%97%A5%E6%9C%AC",
+    "search_keyword": "Canton Vento 826.2 新品 日本",
+    "notes": "国内向け新品商品ページ、正規代理店の現行取扱い、国内税込価格を確認できない。海外新品在庫はあるが、国内新品流通なしとして価格は設定しない。"
+  }
+]
