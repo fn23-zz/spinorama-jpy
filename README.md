@@ -1,6 +1,6 @@
 # SPINORAMA JPY - スピーカー測定＆日本円コスパ分析システム
 
-SPINORAMA公式 ([spinorama.org/scores.html](https://www.spinorama.org/scores.html)) のスピーカー音響測定データに、**日本円（JPY）実勢価格**および**日本市場での入手性（国内正規品・並行輸入・ディスコン等）**の情報を補完したデータベース＆Webダッシュボードです。
+SPINORAMA公式 ([spinorama.org/scores.html](https://www.spinorama.org/scores.html)) のスピーカー音響測定データに、**日本円（JPY）実勢価格**および**日本市場での入手性（国内正規品・並行輸入・ディスコン等）**の情報を補完したデータベース＆Webダッシュボードです。[https://spinorama-jpy.pages.dev/] で公開しています。
 
 「Tone」「Tone w/SUB」「Tone w/EQ」「Tone w/SUB and EQ」の4種類の音響評価スコアそれぞれに対し、価格との関係から**コストパフォーマンスの昇順/降順ソート・散布図分析**が可能です。また、日本市場情報は**週1回ペースで自動更新・蓄積**されます。
 
