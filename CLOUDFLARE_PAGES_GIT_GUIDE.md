@@ -288,10 +288,17 @@ Web UI（`backend/app.py`）で価格や手動フラグを編集した後、即�
 ```
 - 価格巡回をスキップし、数秒で静的生成＆デプロイが完了します。
 
-### 完全自動化（cron運用）
-毎週月曜日の早朝4:00に自動実行する場合：
-```cron
-0 4 * * 1 /home/nari/scripts/spinorama_JPY/deploy_pages.sh --update >> /home/nari/scripts/spinorama_JPY/data/deploy.log 2>&1
+### 完全自動化（Hermes Agent スケジューラーによる週次実行）
+本システムは Linux の crontab ではなく、AI常駐デーモン **「Hermes Agent」の内蔵cronスケジューラー（`~/.hermes/cron/jobs.json`）** により、毎週土曜日に完全自動で2便体制のパイプラインを実行しています：
+
+- **第1便（土曜 09:00 JST / ジョブID: `c98e4ba32075`）**:
+  - 全スピーカーの最新価格巡回 ➔ CPI再計算 ➔ 静的生成 ➔ `scripts/weekly_deploy.sh` による自動Push
+- **第2便（土曜 10:00 JST / ジョブID: `645caad4e7e2`）**:
+  - DeepSeek AIエージェント（`deepseek-v4-flash`）が未検証上位10件をWeb自律調査・DB反映 ➔ 再デプロイ ➔ Telegram通知
+
+手動で今すぐパイプラインを実行したい場合：
+```bash
+bash scripts/weekly_pipeline.sh
 ```
 
 ---

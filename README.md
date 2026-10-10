@@ -91,40 +91,85 @@ graph TB
 
 ---
 
-## 2. ネットワーク・運用アーキテクチャ (パターンB: 自宅Linux ＋ Cloudflare Pages)
+## 2. ネットワーク・運用アーキテクチャ (自宅Linux ＋ GitHub ＋ Cloudflare Pages)
 
-本システムは、**「自宅Linux（Ubuntu）で価格調査・DB管理を行い、成果物を静的サイトとしてCloudflare Pagesに週次デプロイする」** 構成を標準運用モデルとして採用しています。
+本システムは、**「自宅Linux（Ubuntu）上のAIエージェントスケジューラーで価格調査・DB管理を行い、成果物をGitHub配信用ブランチ経由でCloudflare Pagesに週次自動デプロイする」** 構成を採用しています。
 
 ```mermaid
-graph LR
-    subgraph "自宅Linux (Ubuntu)"
-        A["1. 週次クローラー実行<br>(Amazon・価格巡回・回帰分析)"] --> B[("SQLite DB<br>spinorama_jpy.db")]
-        B --> C["2. 静的エクスポート<br>(export_static.py -> dist/)"]
-        C --> D["3. デプロイ実行<br>(./deploy_pages.sh)"]
+flowchart TD
+    subgraph Scheduler ["スケジューリング基盤 (Hermes Agent / 常駐デーモン)"]
+        Cron9["【第1便】毎週土曜 09:00 (JST)<br>ジョブID: c98e4ba32075"]
+        Cron10["【第2便】毎週土曜 10:00 (JST)<br>ジョブID: 645caad4e7e2"]
     end
 
-    subgraph "Cloudflare Pages (完全無料)"
-        E["エッジCDN (世界配信)<br>HTML / CSS / JS / JSON / CSV"]
+    subgraph Linux ["自宅Linux (Ubuntu / 家庭用ISP回線)"]
+        Pipe["scripts/weekly_pipeline.sh"]
+        Crawl["Amazon・ECサイト巡回<br>(backend/scheduler.py)"]
+        DB[("SQLite DB<br>spinorama_jpy.db")]
+        AI["AI自律調査エージェント<br>(DeepSeek / 未検証上位10件)"]
+        Report["reports/weekly_YYYY-MM-DD.md"]
+        Export["静的エクスポート<br>(dist/ ディレクトリ)"]
+        DeployScript["scripts/weekly_deploy.sh<br>(スマートPush)"]
+        
+        Cron9 --> Pipe
+        Pipe --> Crawl --> DB
+        DB --> Export
+        Export --> DeployScript
+
+        Cron10 --> AI
+        AI --> DB
+        AI --> Report
+        AI --> DeployScript
     end
 
-    subgraph "クライアント"
-        F["PC・スマホ・タブレット<br>(爆速0ms表示・落ちない)"]
+    subgraph GitHub ["GitHub リポジトリ (fn23-zz/spinorama-jpy)"]
+        BranchMain["main ブランチ (開発コード)"]
+        BranchPages["pages ブランチ (配信用・成果物のみ)"]
+        DeployScript == "git push -f" ==> BranchPages
     end
 
-    D -->|Wrangler CLI / Git| E
-    E <--> F
+    subgraph Cloudflare ["Cloudflare Pages (全世界エッジCDN)"]
+        CF_Build["Webhook検知・即時配置<br>(所要時間: 10〜20秒)"]
+        CF_Edge["全世界300+エッジサーバー<br>spinorama-jpy.pages.dev"]
+        BranchPages --> CF_Build --> CF_Edge
+    end
+
+    subgraph Notification ["通知・モニタリング"]
+        TG["Telegram通知<br>(週次調査サマリー・順位表)"]
+        AI --> TG
+    end
+
+    subgraph Clients ["エンドユーザー"]
+        Browser["PC / スマホブラウザ<br>(0msインメモリ超高速検索)"]
+        CF_Edge <--> Browser
+    end
 ```
 
-### 2.1 本構成（パターンB）が優れている理由
+### 2.1 週次自動更新メカニズムの仕組み（土曜朝の2便体制）
+
+OS標準の `crontab` ではなく、自律型AIエージェントフレームワーク **「Hermes Agent」の内蔵cronスケジューラー（`~/.hermes/cron/`）** がパイプライン全体をオーケストレーションしています。
+
+1. **【第1便】毎週土曜 09:00 JST — 全自動データ巡回＆デプロイ (ジョブID: `c98e4ba32075`)**:
+   - 実行ファイル: `/home/nari/.hermes/scripts/spinorama_weekly_pipeline.sh` ➔ `scripts/weekly_pipeline.sh`
+   - 全スピーカーの最新価格巡回、回帰分析によるコストパフォーマンス指数（CPI）の再計算、および静的サイト（`dist/`）のエクスポートを実行。
+   - `scripts/weekly_deploy.sh` により、GitHubの `pages` ブランチへ成果物をスマートPushしてCloudflare Pagesを更新。
+2. **【第2便】毎週土曜 10:00 JST — AIエージェントによる未検証候補の市場調査 (ジョブID: `645caad4e7e2`)**:
+   - モデル: `deepseek-v4-flash`
+   - 参考CPIが高い未検証スピーカー上位10件を自動選定し、Web検索（価格.com、サウンドハウス、Amazon、メーカー直販等）で自律調査。
+   - 「1本売り / ペア売り」「国内正規流通の有無」「終売」を厳格に判定し、DB（`is_manual_override=1`）へ恒久保存。
+   - 週次レポート（`reports/weekly_YYYY-MM-DD.md`）を出力し、最新結果を再度デプロイした上で、サマリーをTelegramへ通知。
+
+### 2.2 本アーキテクチャが優れている理由
 
 1. **スクレイピングの安定性（家庭用ISP回線）**:
    * Amazon.co.jpや国内ECサイトは、Cloudflare/AWS等のデータセンターIPを厳格に検知・拒否（CAPTCHA/403）します。家庭用ISP回線の自宅Linuxで巡回することで、安定した価格取得が可能です。
-2. **世界最高峰の表示速度＆ダウンタイムゼロ**:
+2. **Wrangler廃止影響の完全排除（GitHub pagesブランチ連動）**:
+   * Cloudflare CLI（Wranglerや次世代`cf`）を一切介さず、Git PushのWebhook連動でエッジへ反映されるため、CLIツールのEOL・アップデート・認証切れのリスクが恒久的にゼロです。
+3. **世界最高峰の表示速度＆ダウンタイムゼロ**:
    * Cloudflare Pagesは全世界300都市以上のエッジサーバーから静的配信されるため、自宅サーバーの電源が落ちていても、回線が混雑していても、スマホから一瞬（TTFB数十ミリ秒）でランキングが表示されます。
-3. **クライアントサイド超高速インメモリ検索**:
-   * 全1,128機種のデータ（約150KB gzip）が初回にキャッシュされ、メーカー・価格・Toneスコア等の絞り込みやソートが**0ms（即時）**で動作します。
-4. **安心の完全無料＆ノーメンテナンス**:
-   * サーバーレス配信のため、自宅Linuxのポート開放（穴あけ）や固定IPは一切不要です。運用コスト・電気代も最小限で済みます。
+4. **クライアントサイド超高速インメモリ検索**:
+   * 全1,132機種のデータが初回にキャッシュされ、メーカー・価格・Toneスコア等の絞り込みやソートが**0ms（即時）**で動作します。
+
 
 ---
 
@@ -335,14 +380,25 @@ pip3 install numpy
 ```
 ※ 所要時間は約20〜30秒です。成果物のみを `pages` ブランチに強制上書きプッシュするため、リポジトリが肥大化しません。
 
-### 5.4 完全自動化（cron運用）にしたい場合
-週に1回決まった曜日・時間に完全自動でCloudflare Pagesまで反映させたい場合は、cronに1行追加します：
+### 5.4 自動運用スケジューラー（Hermes Agent による週次自律実行）
+
+本システムは、Linux標準のcrontabではなく、AI常駐デーモン **「Hermes Agent」の内蔵cronスケジューラー（`~/.hermes/cron/jobs.json`）** により、毎週土曜日に完全自動で2便体制のパイプラインを実行しています：
+
+| 便 | 実行時刻 (JST) | ジョブID | ジョブ名 / 役割 | 実行コマンド / モデル |
+| :--- | :--- | :--- | :--- | :--- |
+| **第1便** | **毎週土曜 09:00** | `c98e4ba32075` | データ更新＆デプロイ | `bash scripts/weekly_pipeline.sh` |
+| **第2便** | **毎週土曜 10:00** | `645caad4e7e2` | 未検証上位10件の自律調査 | DeepSeek (`deepseek-v4-flash`) ➔ `scripts/weekly_deploy.sh` ➔ Telegram通知 |
+
+#### 手動で今すぐパイプラインを実行したい場合
 ```bash
-crontab -e
+# 価格巡回・CPI再計算・静的生成・デプロイの一連フローを即時実行
+bash scripts/weekly_pipeline.sh
 ```
-以下を追記（毎週月曜日の早朝4:00に自動更新＆デプロイ）：
-```cron
-0 4 * * 1 /home/<ユーザー名>/scripts/spinorama_JPY/deploy_pages.sh --update >> /home/<ユーザー名>/scripts/spinorama_JPY/data/deploy.log 2>&1
+
+#### 週次調査レポートの確認
+第2便（10:00）でAIエージェントが調査・更新した記録は、プロジェクト内の `reports/` に蓄積されます：
+```bash
+ls -la reports/weekly_*.md
 ```
 
 ### 5.5 （オプション）手動修正・固定を行いたい場合
