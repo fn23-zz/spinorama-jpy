@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPINORAMA JPY - スピーカー測定＆日本円コスパ分析ランキング</title>
+  <meta name="description" content="SPINORAMAのスピーカー音響測定データに日本円実勢価格と国内入手性を補完。Tone、w/sub、w/eq、w/bothの各スコアからコストパフォーマンスを多角的に分析。">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Plotly CDN for interactive scatter plots -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand-section">
+        <a href="/" class="brand-logo">
+          <span class="brand-title">SPIN<span style="font-weight: 300;">orama</span></span>
+          <span class="brand-badge">JPY Edition</span>
+        </a>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs-wrap">
+        <button id="tabBtnRanking" class="nav-tab-btn active" type="button" onclick="if(window.switchTab)window.switchTab('ranking');">
+          <span>📊 コスパ分析ランキング</span>
+        </button>
+        <button id="tabBtnVerification" class="nav-tab-btn" type="button" onclick="if(window.switchTab)window.switchTab('verification');">
+          <span>🎯 日本市場価格 確からしさ検証</span>
+          <span id="tabUnverifiedBadge" class="nav-tab-badge">---</span>
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="btn btn-sm" title="テーマ切り替え">
+          <span id="themeIcon">☀️</span> テーマ
+        </button>
+        <button id="triggerUpdateBtn" class="btn btn-sm" title="今すぐ週次データを同期・更新">
+          🔄 データ更新
+        </button>
+        <a href="/api/export_csv" id="csvExportBtn" class="btn btn-sm btn-primary" title="CSVダウンロード">
+          📥 CSV出力
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Ranking & Analysis View -->
+    <div id="rankingView">
+
+    <!-- KPI Summary Grid -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <h4>登録スピーカー数</h4>
+          <div class="kpi-value" id="kpiTotal">---</div>
+        </div>
+        <div class="kpi-icon">🔊</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <h4>国内正規品 流通中</h4>
+          <div class="kpi-value" id="kpiDomestic">---</div>
+        </div>
+        <div class="kpi-icon" style="color: var(--accent-emerald); background: rgba(16, 185, 129, 0.1);">🇯🇵</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <h4>手動価格・入手性 修正</h4>
+          <div class="kpi-value" id="kpiManual">---</div>
+        </div>
+        <div class="kpi-icon" style="color: var(--accent-purple); background: rgba(168, 85, 247, 0.1);">✍️</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <h4>データ最終同期</h4>
+          <div class="kpi-value" id="kpiUpdated" style="font-size: 1.05rem; font-weight: 700;">---</div>
+        </div>
+        <div class="kpi-icon" style="color: var(--accent-amber); background: rgba(245, 158, 11, 0.1);">⏱️</div>
+      </div>
+    </section>
+
+    <!-- Interactive Scatter Plot: Price vs Score -->
+    <section class="chart-section">
+      <div class="chart-header">
+        <div class="chart-title">
+          <span>📈 価格 vs スコア 散布図（コスパ分析 & 回帰曲線）</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">分析対象スコア:</label>
+          <select id="chartMetricSelect" class="filter-select" style="min-width: 170px;">
+            <option value="score_tone">Tone (標準)</option>
+            <option value="score_tone_sub">Tone w/SUB (サブウーファー)</option>
+            <option value="score_tone_eq">Tone w/EQ (イコライザー)</option>
+            <option value="score_tone_sub_eq">Tone w/Both (SUB + EQ)</option>
+          </select>
+        </div>
+      </div>
+      <div id="scatterPlot" class="chart-container"></div>
+    </section>
+
+    <!-- Filter & Sorter Panel -->
+    <section class="filter-panel">
+      <!-- Search & Primary Filters -->
+      <div class="filter-row">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="ブランドやモデル名で検索 (例: JBL, Genelec, HS5, LS50)...">
+        </div>
+
+        <select id="filterAvailability" class="filter-select">
+          <option value="available" selected>日本で入手可能（国内正規 ＋ 海外市販品）</option>
+          <option value="domestic_only">国内正規品のみ（在庫・取寄せ）</option>
+          <option value="discontinued">生産完了（ディスコン）のみ</option>
+          <option value="all">すべて（自作DIY・国内未発売を含む全件）</option>
+        </select>
+
+        <select id="filterBrand" class="filter-select">
+          <option value="">すべてのブランド</option>
+        </select>
+
+        <select id="filterShape" class="filter-select">
+          <option value="">すべての形状</option>
+          <option value="bookshelves">Bookshelves</option>
+          <option value="floorstanders">Floorstanders</option>
+          <option value="center">Center</option>
+        </select>
+
+        <select id="filterEnergy" class="filter-select">
+          <option value="">パッシブ / アクティブ</option>
+          <option value="active">Active (アンプ内蔵)</option>
+          <option value="passive">Passive (要外部アンプ)</option>
+        </select>
+      </div>
+
+      <!-- Price Range & Sort Bar -->
+      <div class="filter-row" style="justify-content: space-between;">
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">予算範囲 (円):</span>
+          <input type="number" id="minPriceInput" placeholder="下限 (円)" class="filter-select" style="width: 110px; min-width: auto;" step="10000">
+          <span style="color: var(--text-muted);">〜</span>
+          <input type="number" id="maxPriceInput" placeholder="上限 (円)" class="filter-select" style="width: 110px; min-width: auto;" step="10000">
+          <button id="applyPriceBtn" class="btn btn-sm">絞り込み</button>
+          <button id="resetFilterBtn" class="btn btn-sm" style="color: var(--text-muted);">リセット</button>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">並び順:</span>
+          <select id="sortSelect" class="filter-select" style="min-width: 220px;">
+            <!-- Tone Score Sorting -->
+            <optgroup label="音響スコア順">
+              <option value="score_tone" selected>Tone スコア降順</option>
+              <option value="score_tone_sub">Tone w/SUB 降順</option>
+              <option value="score_tone_eq">Tone w/EQ 降順</option>
+              <option value="score_tone_sub_eq">Tone w/Both 降順</option>
+            </optgroup>
+            <!-- Cost-Performance Sorting -->
+            <optgroup label="コストパフォーマンス順 (回帰残差)">
+              <option value="cp_tone">Tone コスパ降順 (お買得機)</option>
+              <option value="cp_tone_sub">Tone w/SUB コスパ降順</option>
+              <option value="cp_tone_eq">Tone w/EQ コスパ降順</option>
+              <option value="cp_tone_sub_eq">Tone w/Both コスパ降順</option>
+            </optgroup>
+            <!-- Price Sorting -->
+            <optgroup label="価格順">
+              <option value="price_jpy_asc">日本円価格 昇順 (安い順)</option>
+              <option value="price_jpy_desc">日本円価格 降順 (高い順)</option>
+              <option value="price_usd_asc">USD価格 昇順</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table Header Info & Table -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.5rem;">
+      <div id="resultsCount" style="font-size: 0.85rem; color: var(--text-secondary);">
+        検索結果: 読み込み中...
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted);">
+        ※ 行をクリックまたは「編集」ボタンで日本円価格・入手性を修正できます
+      </div>
+    </div>
+
+    <section class="table-container">
+      <table class="scores-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="brand">Brand Model</th>
+            <th class="sortable" data-sort="price_usd">USD</th>
+            <th class="sortable" data-sort="price_jpy">JPY 実勢価格</th>
+            <th>入手性</th>
+            <th>Reviews</th>
+            <th class="sortable" data-sort="f3">-3dB</th>
+            <th class="sortable" data-sort="flatness">Flat.</th>
+            <th class="sortable active-sort" data-sort="score_tone">Tone</th>
+            <th class="sortable" data-sort="score_tone_sub">w/sub</th>
+            <th class="sortable" data-sort="score_tone_eq">w/eq</th>
+            <th class="sortable" data-sort="score_tone_sub_eq">w/both</th>
+            <th class="sortable" data-sort="cp_tone" id="thCpCol">Toneコスパ</th>
+            <th style="text-align: center;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="speakersTbody">
+          <!-- Rows injected via app.js -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Pagination -->
+    <div class="pagination-bar">
+      <div id="paginationInfo" style="font-size: 0.85rem; color: var(--text-secondary);">
+        ページ 1 / 1
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="prevPageBtn" class="btn btn-sm" disabled>◀ 前のページ</button>
+        <button id="nextPageBtn" class="btn btn-sm">次のページ ▶</button>
+      </div>
+    </div>
+    </div>
+    <!-- End of rankingView -->
+
+    <!-- ========================================================
+         Price Verification Studio View
+    ======================================================== -->
+    <div id="verificationView" style="display: none;">
+      <div class="verification-container">
+        
+        <!-- Progress Dashboard -->
+        <section class="verification-dashboard">
+          <div class="progress-header">
+            <div class="progress-title-wrap">
+              <span style="font-size: 1.5rem;">🎯</span>
+              <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary);">日本市場価格 確からしさ検証スタジオ</h3>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                  ブラウザで各ショップの実勢価格・販売単位（1本/ペア）を実際に検索し、最も確からしい情報を指定して精度を向上させます。
+                </p>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">検証完了率</div>
+              <div class="progress-pct" id="verifyProgressPct">0.0%</div>
+            </div>
+          </div>
+
+          <div class="progress-bar-track">
+            <div id="verifyProgressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+
+          <!-- Quick Filter Status Chips -->
+          <div class="progress-stat-chips">
+            <button class="stat-chip active" data-vfilter="all">
+              <span>全件:</span> <b id="statTotalCount">0</b>
+            </button>
+            <button class="stat-chip" data-vfilter="unverified" style="border-color: rgba(148, 163, 184, 0.4);">
+              <span style="color: var(--text-secondary);">🔴 未検証:</span> <b id="statUnverifiedCount">0</b>
+            </button>
+            <button class="stat-chip" data-vfilter="needs_review" style="border-color: rgba(245, 158, 11, 0.4);">
+              <span style="color: var(--accent-amber);">🟡 要再確認:</span> <b id="statNeedsReviewCount">0</b>
+            </button>
+            <button class="stat-chip" data-vfilter="verified" style="border-color: rgba(16, 185, 129, 0.4);">
+              <span style="color: var(--accent-emerald);">🟢 検証済み:</span> <b id="statVerifiedCount">0</b>
+            </button>
+            <button class="stat-chip" data-vfilter="unavailable" style="border-color: rgba(244, 63, 94, 0.4);">
+              <span style="color: var(--accent-rose);">🚫 国内流通なし:</span> <b id="statUnavailableCount">0</b>
+            </button>
+          </div>
+        </section>
+
+        <!-- 2-Pane Verification Workbench -->
+        <div class="verification-workbench">
+          
+          <!-- Left Pane: Target Speakers List -->
+          <aside class="verifier-sidebar">
+            <div class="verifier-list-header">
+              <input type="text" id="verifierSearchInput" class="verifier-search-input" placeholder="候補を絞り込み (例: JBL, HS5)...">
+              <div class="verifier-list-controls">
+                <select id="verifierPrioritySelect" class="filter-select" style="font-size: 0.78rem; padding: 0.35rem 0.6rem; flex: 1;">
+                  <option value="cpi_desc" selected>注目高コスパ順 (CPI降順)</option>
+                  <option value="score_desc">Tone スコア順</option>
+                  <option value="brand_asc">ブランド名 昇順</option>
+                </select>
+                <select id="verifierBrandSelect" class="filter-select" style="font-size: 0.78rem; padding: 0.35rem 0.6rem; flex: 1;">
+                  <option value="">全ブランド</option>
+                </select>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted);">
+                <span id="verifierListCount">0 件表示中</span>
+                <span id="verifierActiveIndex">選択中: - / -</span>
+              </div>
+            </div>
+
+            <!-- List of items -->
+            <div id="verifierItemsContainer" class="verifier-items-container">
+              <!-- Dynamically populated via verification.js -->
+            </div>
+          </aside>
+
+          <!-- Right Pane: Active Investigation & Input Workspace -->
+          <main class="verifier-main" id="verifierWorkspace">
+            
+            <!-- Active Speaker Specs Banner -->
+            <div class="active-spk-banner">
+              <div class="active-spk-title-wrap">
+                <h2 id="actSpkTitle">スピーカーを選択してください</h2>
+                <div class="active-spk-specs" id="actSpkSpecs">
+                  <span class="active-spk-spec-tag" id="actSpkPriceUsd">USD: -</span>
+                  <span class="active-spk-spec-tag" id="actSpkToneScore">Tone: -</span>
+                  <span class="active-spk-spec-tag" id="actSpkF3">-3dB: -</span>
+                  <span class="active-spk-spec-tag" id="actSpkCPI">CPI: -</span>
+                  <span class="active-spk-spec-tag" id="actSpkCurrentJpy">現在価格: -</span>
+                </div>
+              </div>
+              <div id="actSpkBadgeContainer">
+                <!-- Status Badge -->
+              </div>
+            </div>
+
+            <!-- Search Assistant Box (Keyword Clipboard & One-click Search) -->
+            <div class="search-assistant-box">
+              <div class="assistant-header">
+                <div class="assistant-title">
+                  <span>⚡ 検索アシスタント（切り貼り ＆ ワンクリック検索）</span>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">
+                  ※ 各サイトで実際に検索して確からしい商品ページを確認
+                </span>
+              </div>
+
+              <!-- Search keyword input & copy button -->
+              <div class="search-keyword-row">
+                <input type="text" id="assistantKeywordInput" class="search-keyword-input" placeholder="検索ワード...">
+                <button type="button" id="btnCopyKeyword" class="btn-copy" title="クリップボードにコピー">
+                  <span id="copyIcon">📋</span> <span id="copyText">コピー</span>
+                </button>
+              </div>
+
+              <!-- Keyword Suggestion Chips -->
+              <div class="keyword-suggestions">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); margin-right: 0.2rem;">検索ワード候補:</span>
+                <div id="keywordChipsContainer" style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                  <!-- Dynamic chips -->
+                </div>
+              </div>
+
+              <!-- Instant Search Site Buttons (open in new tab) -->
+              <div class="instant-search-group">
+                <a id="btnSearchGoogle" href="#" target="_blank" rel="noopener noreferrer" class="btn-search-site btn-search-google">
+                  <span>🔍 Google で検索</span>
+                </a>
+                <a id="btnSearchKakaku" href="#" target="_blank" rel="noopener noreferrer" class="btn-search-site btn-search-kakaku">
+                  <span>🏷️ 価格.com</span>
+                </a>
+                <a id="btnSearchSoundhouse" href="#" target="_blank" rel="noopener noreferrer" class="btn-search-site btn-search-soundhouse">
+                  <span>🎵 サウンドハウス</span>
+                </a>
+                <a id="btnSearchAmazon" href="#" target="_blank" rel="noopener noreferrer" class="btn-search-site btn-search-amazon">
+                  <span>📦 Amazon.co.jp</span>
+                </a>
+                <a id="btnSearchYodobashi" href="#" target="_blank" rel="noopener noreferrer" class="btn-search-site btn-search-yodobashi">
+                  <span>⚡ ヨドバシ.com</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Verified Information Input Form -->
+            <div class="verify-form-box">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                <span>✍️ 最も確からしい情報を指定・入力</span>
+              </h4>
+
+              <input type="hidden" id="vSpeakerId">
+
+              <!-- Source URL & Used Keyword -->
+              <div class="form-grid-2">
+                <div class="form-group" style="margin: 0;">
+                  <label>調査したサイトURL（商品ページや価格比較ページのURL）</label>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <input type="url" id="vSourceUrl" class="form-control" placeholder="https://www.soundhouse.co.jp/products/detail/item/...">
+                    <button type="button" id="btnTestUrl" class="btn btn-sm" title="ブラウザでURLを開いて確認" style="white-space: nowrap;">開く ↗</button>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label>実際に使用した検索ワード</label>
+                  <input type="text" id="vSearchKeyword" class="form-control" placeholder="例: JBL 305P MkII ペア 価格">
+                </div>
+              </div>
+
+              <!-- Shop Name & Price Calculation -->
+              <div class="form-grid-3">
+                <div class="form-group" style="margin: 0;">
+                  <label>販売元・調査ショップ名</label>
+                  <input type="text" id="vSourceName" class="form-control" placeholder="例: サウンドハウス">
+                  <div class="quick-tags-wrap">
+                    <span class="quick-tag" data-tag="サウンドハウス">サウンドハウス</span>
+                    <span class="quick-tag" data-tag="Amazon">Amazon</span>
+                    <span class="quick-tag" data-tag="価格.com 最安店">価格.com</span>
+                    <span class="quick-tag" data-tag="ヨドバシ.com">ヨドバシ</span>
+                    <span class="quick-tag" data-tag="国内正規代理店">国内代理店</span>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label>1本単価 (単品売りの場合に入力)</label>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <input type="number" id="vPriceEach" class="form-control" placeholder="例: 17600">
+                    <button type="button" id="btnCalcPairFromEach" class="btn btn-sm btn-primary" title="1本単価を2倍してペア価格にセット" style="white-space: nowrap;">
+                      ×2 (ペア換算)
+                    </button>
+                  </div>
+                  <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; display: block;">
+                    ※ モニター等で1本売りの場合はここに入力して「×2」を押すとペア価格に反映されます
+                  </span>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label>日本円 実勢価格 (ペア換算・税込)</label>
+                  <input type="number" id="vPriceJpy" class="form-control" placeholder="例: 35200 (入手不可時は空欄可)" style="font-size: 1.05rem; font-weight: 700; color: var(--accent-emerald);">
+                  <div style="display: flex; gap: 0.4rem; margin-top: 0.35rem; align-items: center;">
+                    <select id="vPriceType" class="form-control" style="font-size: 0.8rem; padding: 0.3rem 0.5rem; width: auto;">
+                      <option value="pair" selected>ペア (2本)</option>
+                      <option value="each">1本 (単品)</option>
+                    </select>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">※ CPI計算にはペア価格が使われます</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Availability & Verification Status -->
+              <div class="form-grid-3">
+                <div class="form-group" style="margin: 0;">
+                  <label>入手性ステータス</label>
+                  <select id="vAvailability" class="form-control">
+                    <option value="domestic_in_stock">国内正規品 流通中（在庫あり・即納）</option>
+                    <option value="domestic_backorder">国内正規品 取寄せ／受注生産</option>
+                    <option value="import_only">並行輸入／海外直輸入のみ</option>
+                    <option value="discontinued">生産完了（ディスコン）・中古市場</option>
+                    <option value="not_available">国内入手困難／自作DIY／未発売</option>
+                    <option value="unconfirmed">未調査</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label>確からしさ・検証ステータス</label>
+                  <select id="vVerificationStatus" class="form-control" style="font-weight: 700;">
+                    <option value="verified" selected>🟢 検証済み・確実（確認済）</option>
+                    <option value="needs_review">🟡 要再確認（要経過観察・曖昧）</option>
+                    <option value="unverified">🔴 未検証（為替換算/推定値のまま）</option>
+                    <option value="unavailable">🚫 国内流通なし・入手不可確定</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label>確からしさ信頼度ランク</label>
+                  <select id="vConfidenceLevel" class="form-control">
+                    <option value="high" selected>高 (大手正規店・公式実売を確認)</option>
+                    <option value="medium">中 (並行輸入・二次流通等の参考値)</option>
+                    <option value="low">低 (推計・為替目安値)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div class="form-group" style="margin: 0;">
+                <label>調査メモ・特記事項（1本売り保証、ディスコン後継機情報、国内正規代理店など）</label>
+                <input type="text" id="vNotes" class="form-control" placeholder="例: サウンドハウスにて1本17,600円、ペア35,200円を確認。定番在庫あり。">
+              </div>
+
+              <!-- Quick Action buttons inside form -->
+              <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; margin-top: 0.25rem;">
+                <button type="button" id="btnQuickSetUnavailable" class="btn btn-sm" style="color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.4);">
+                  🚫 日本国内流通なしとして即確定
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Bar (Save, Save & Next, Prev/Next) -->
+            <div class="verifier-actions">
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="button" id="btnPrevSpeaker" class="btn">◀ 前の候補</button>
+                <button type="button" id="btnNextSpeaker" class="btn">次の候補 ▶</button>
+              </div>
+
+              <div class="action-buttons-right">
+                <button type="button" id="btnSaveOnly" class="btn" title="保存のみ (Ctrl+S)">
+                  💾 保存
+                </button>
+                <button type="button" id="btnSaveAndNext" class="btn-save-next" title="保存して次のスピーカーへ (Ctrl+Enter)">
+                  <span>✅ 保存して次へ進む</span>
+                  <span style="font-size: 0.75rem; opacity: 0.8; font-weight: normal;">(Ctrl+Enter)</span>
+                </button>
+              </div>
+            </div>
+
+          </main>
+        </div>
+
+      </div>
+    </div>
+    <!-- End of verificationView -->
+
+  </main>
+
+  <!-- Edit Market Modal -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalSpeakerName" style="font-size: 1.1rem; font-weight: 700;">スピーカー価格・入手性編集</h3>
+        <button id="closeModalBtn" class="modal-close">&times;</button>
+      </div>
+      <form id="editForm">
+        <input type="hidden" id="editSpeakerId">
+        
+        <div class="form-group">
+          <label>日本円 実勢価格 (税込・ペア換算 / 入手不可の場合は空欄可)</label>
+          <input type="number" id="editPriceJpy" class="form-control" placeholder="例: 35200 (未定・入手不可の場合は空欄)">
+        </div>
+
+        <div class="form-group">
+          <label>販売単位</label>
+          <select id="editPriceType" class="form-control">
+            <option value="pair">ペア (2本)</option>
+            <option value="each">1本 (単品)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>日本市場での入手性ステータス</label>
+          <select id="editAvailability" class="form-control">
+            <option value="domestic_in_stock">国内正規品 流通中（入手容易）</option>
+            <option value="domestic_backorder">国内正規品 取寄せ／受注生産</option>
+            <option value="import_only">並行輸入／個人輸入のみ</option>
+            <option value="discontinued">生産完了（ディスコン）・中古市場のみ</option>
+            <option value="not_available">国内入手困難／未導入</option>
+            <option value="unconfirmed">未調査</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>販売元・情報ソース名</label>
+          <input type="text" id="editSourceName" class="form-control" placeholder="例: サウンドハウス, Amazon, 公式">
+        </div>
+
+        <div class="form-group">
+          <label>参考URL</label>
+          <input type="url" id="editSourceUrl" class="form-control" placeholder="https://...">
+        </div>
+
+        <div class="form-group">
+          <label>メモ・備考</label>
+          <textarea id="editNotes" class="form-control" rows="2" placeholder="例: 1本売り価格、国内正規保証付き"></textarea>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+          <input type="checkbox" id="editIsManual" checked>
+          <label for="editIsManual" style="margin: 0; cursor: pointer;">手動固定（自動更新で上書きしない）</label>
+        </div>
+
+        <div style="background: rgba(244, 63, 94, 0.1); border: 1px dashed var(--accent-rose); border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.78rem; color: var(--accent-rose);">日本で入手できない場合:</span>
+          <button type="button" id="quickUnavailableBtn" class="btn btn-sm" style="border-color: var(--accent-rose); color: var(--accent-rose);">
+            🚫 入手不可として一括設定
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" id="cancelModalBtn" class="btn">キャンセル</button>
+          <button type="submit" class="btn btn-primary">保存する</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chart.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/verification.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
